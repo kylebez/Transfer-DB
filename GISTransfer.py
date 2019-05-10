@@ -29,36 +29,32 @@ SrcIsNotGDB = False
 DstIsNotGDB = False
 
 def transferData(src, dest):   
-    #concatenate src and dest paths
+    #concatenate src and dest paths and check editing capability
     global SrcIsNotGDB
     global DstIsNotGDB
     sourceTable = src
     destTable = dest
-    srcConn = sourceTable.rfind('\\')
-    srcConn = [:srcConn+1]
-    destConn = destTable.rfind('\\')
-    destConn = [:destConn+1]
-    #Editor workspace
-    try:
-        arcpy.env.workspace = destConn
-        destEdit = arcpy.da.Editor(arcpy.env.workspace)
-    except:       
-        if "gis.Project_Conflicts" in destTable:
-            DstIsNotGDB = True
-        else:
-            print "General error on "+dest[0]
-            print traceback.format_exc()
-            return
-    try:
-        srcEdit = arcpy.da.Editor(src[0])
-    except:
-        if "gis.GISProjectData" in sourceTable: 
+    if src == 'ODBC':
+        SrcIsNotGDB = True
+    else:
+        srcConn = sourceTable.rfind('\\')
+        srcConn = [:srcConn+1]
+        try:
+            srcEdit = arcpy.da.Editor(src[0])
+        except:
             SrcIsNotGDB = True
-        else:
-            print "General error on "+src[0]
-            print traceback.format_exc()
-            return
-    #if PMIS table doesn't work with arcpy - operation parameters are 'SEL' for selecting, 'DEL' for truncating, and 'INS' for copying
+    if dest == 'ODBC':
+        DstIsNotGDB = True
+    else:
+        destConn = destTable.rfind('\\')
+        destConn = [:destConn+1]
+        try:
+            arcpy.env.workspace = destConn
+            destEdit = arcpy.da.Editor(arcpy.env.workspace)
+        except:
+            DstIsNotGDB = True              
+    
+    #if table doesn't work with arcpy - operation parameters are 'SEL' for selecting, 'DEL' for truncating, and 'INS' for copying
     def tryODBC(operation,intable,inval = None):
         logging.info('Performing {0} on ODBC'.format(operation))
         ix = intable.rfind('\\')
